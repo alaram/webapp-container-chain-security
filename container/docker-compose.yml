@@ -1,0 +1,50 @@
+version: '3'
+services:
+  myservice_activemq:
+    image: activemq:5.16.2
+    container_name: activemq
+    build:
+      context: .
+      dockerfile: Docker-activemq/Dockerfile
+    ports:
+      - 61616:61616
+      - 8161:8161
+    networks:
+      - myservice-network
+
+  myservice_postgresql_db:
+    image: postgresql:9.6-alpine
+    container_name: myservice-postgresql
+    build:
+      context: .
+      dockerfile: Docker-postgresql/Dockerfile
+    ports:
+      - 5432:5432
+    networks:
+      - myservice-network
+
+  myservice_batch:
+    image: myservicebatch:latest
+    container_name: myservice-batch
+    build:
+      context: .
+      dockerfile: Docker-wildfly/Docker-myservice/Dockerfile
+    ports:
+      - 8080:8080
+      - 9990:9990
+    networks:
+      - myservice-network
+    depends_on:
+      - myservice_activemq
+      - myservice_postgresql_db
+    environment:
+      AMQ_BROKER_URL: myservice-activemq:61616
+      AMQ_BROKER_USERNAME: admin
+      AMQ_BROKER_PASSWORD: admin
+      DB_CONNECTION_URL: myservice_postgresql_db:5432
+      DB_USERNAME: myservice
+      DB_PASSWORD: myservice
+      UC_ENV: local
+
+networks:
+  myservice-network: {}
