@@ -1,0 +1,7 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  {% if g.user %}
+    <h1>Welcome {{ g.user['username'] }}!</h1>
+  {% endif %}
+{% endblock %}
