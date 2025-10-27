@@ -1,23 +1,33 @@
 DROP TABLE IF EXISTS user;
+DROP TABLE IF EXISTS usersecure;
+DROP TABLE IF EXISTS products;
 
 -- User table
 CREATE TABLE user (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT UNIQUE NOT NULL,
-  salt TEXT NOT NULL,
-  hash TEXT NOT NULL,
-  algo TEXT NOT NULL,
-  mfa_metadata TEXT
+  password TEXT NOT NULL
 );
 
--- MFA metadata
-CREATE TABLE IF NOT EXISTS webauthn_credential (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    credential_id TEXT NOT NULL UNIQUE,     -- base64url
-    public_key TEXT NOT NULL,               -- base64 (COSE) or PEM encoded
-    sign_count INTEGER DEFAULT 0,
-    transports TEXT,                        -- JSON array string (optional)
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(user_id) REFERENCES user(id) ON DELETE CASCADE
+CREATE TABLE usersecure (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT UNIQUE NOT NULL,
+  hash TEXT NOT NULL
 );
+
+CREATE TABLE products (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  description TEXT,
+  price REAL NOT NULL,
+  sku TEXT UNIQUE,
+  created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Seed products (sample rows for demo)
+INSERT INTO products (name, description, price, sku) VALUES ('Red Widget', 'A great red widget', 9.99, 'RW-001');
+INSERT INTO products (name, description, price, sku) VALUES ('Blue Widget', 'A great blue widget', 12.50, 'BW-002');
+INSERT INTO products (name, description, price, sku) VALUES ('Green Thing', 'Useful green thing', 7.25, 'GT-003');
+INSERT INTO products (name, description, price, sku) VALUES ('Yellow Gadget', 'Bright and small', 15.00, 'YG-004');
+INSERT INTO products (name, description, price, sku) VALUES ('Black Clock', 'Loose black clock', 19.25, 'GT-005');
+INSERT INTO products (name, description, price, sku) VALUES ('White Pants', 'Vintage white pants', 1.00, 'YG-006');
