@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block header %}
+  <h1>{% block title %}Product{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+    <h1>Search results for: {{ q|e }}</h1>
+    <form action="{{ url_for('auth.products_injection_search') }}" method="get">
+        <input name="q" value="{{ q }}">
+        <input type="submit" value="Search">
+    </form>
+    <ul>{% for r in rows %}
+        <li>{{ r['id'] }}: {{ r['name'] }} — {{ r['price'] }} — {{ r['sku'] }}</li>
+        {% endfor %}
+    </ul>
+{% endblock %}

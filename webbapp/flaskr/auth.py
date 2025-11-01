@@ -1,16 +1,16 @@
-import functools
-import os
-import subprocess
 import re
+import os
+import functools
+import subprocess
 
-from flask import Blueprint, flash, g, redirect, render_template, request, session, url_for, Flask
+from flask import Blueprint, flash, g, redirect, render_template, request, session, url_for, Flask, make_response
 from werkzeug.security import check_password_hash, generate_password_hash
 from flaskr.db import get_db
-
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 app = Flask(__name__)
 
+#OS command injection via a diagnostics shell command
 @bp.route('/ping', methods=['GET'])
 def ping_host():
     host = request.args.get('host')   # 1️⃣ ❌ Take user input directly (no validation)
@@ -59,16 +59,63 @@ def products_list():
     posts = db.execute('SELECT id, name, description, price, sku FROM products ORDER BY id DESC').fetchall()
     return render_template('auth/products.html', posts=posts)
 
-# Vulnerable search route (INTENTIONALLY UNSAFE for demonstration)
-@bp.route('/products/search')
-def products_search():
+# Products search route with security vulnerabillty 
+# XSS (INTENTIONALLY UNSAFE for demonstration)
+@bp.route('/products/vulnerable/search', methods=['GET'])
+def products_search_vulnerable():
+    #q = request.args.get('q', '')
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head><title>Raw HTML Search</title></head>
+    <body>
+        <h2>Raw HTML Form</h2>
+        <form action="" method="get">
+            <a href="javascript:alert('unsafe');">click here</a>
+            <p/>
+            <input name="q" value="">
+            <input type="submit" value="Search" onclick=alert('XSS')>
+        </form>
+    </body>
+    </html>
+    """
+
+    # Create the response object
+    response = make_response(html_content)
+    # Set the Content-Type header
+    response.headers['Content-Type'] = 'text/html'
+    return response
+
+# Safe search route for defend against 
+# SQL Injection search textbox
+@bp.route('/products/injection/search', methods=['GET'])
+def products_injection_search():
+    
     q = request.args.get('q', '')
-    # INTENTIONALLY UNSAFE: building SQL from raw input to demonstrate SQL injection vulnerability
-    # Do NOT use this pattern in production. We'll include recommended fixes later.
+
+    # INTENTIONALLY UNSAFE: building SQL from raw input to demonstrate 
+    # SQL injection vulnerability. Do NOT use this pattern in production.
     sql = f"SELECT id, name, description, price, sku FROM products WHERE name LIKE '%{q}%' LIMIT 100"
-    db = get_db()
-    rows = db.execute(sql).fetchall()
-    return render_template('auth/product_search.html', q=q, rows=rows)
+    rows = get_db().execute(sql).fetchall()
+    return render_template('auth/product_injection_search.html', q=q, rows=rows)
+
+# Safe search route for defend against 
+# SQL Injection
+@bp.route('/products/secure/search', methods=['GET'])
+def products_secure_search():
+
+    # 1. Prepare the search term for LIKE
+    # Add the wildcards (%) outside the SQL query string
+    q = request.args.get('q', '')
+
+    # 2. Define the SQL query with a placeholder (e.g., ?)
+    sql = "SELECT id, name, description, price, sku FROM products WHERE name LIKE ? LIMIT 100"
+
+    # 3. Execute the query using the placeholder and passing the data separately
+    # The database driver will safely escape the search_term.
+    # The data is passed as a tuple
+    rows = get_db().execute(sql, (f"%{q}%",)).fetchall()
+    return render_template('auth/product_secure_search.html', q=q, rows=rows)
 
 # register vulnerable
 @bp.route('/register', methods=('GET', 'POST'))
@@ -125,28 +172,64 @@ def register_secure():
 
     return render_template("auth/register_secure.html")
 
-# login insecure
+# This method perform the 
+# login insecure, by requesting username/password
+# and using the username included in the error message 
+# and will be displayed back to the user without being encoded later.
+# This method also creates a raw html page with no security/validation
+# whatsoever
 @bp.route('/login', methods=('GET', 'POST'))
 def login():
+    error_message = ""
+    
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        db = get_db()
-        error = None
-        user = db.execute("SELECT id, username, password FROM user WHERE username = '" + username + "'").fetchone()
-        if user is None:
-            error = "Incorrect username"
+        # Get user input from the form
+        username = request.form.get('username', '')
+        password = request.form.get('password', '')
 
-        if error is None:
-            session.clear()
-            session['user_id'] = user['id']
-            return redirect(url_for('auth.index', username=username))
+        # Simulate a failed login and construct the error message
+        # ⚠️ VULNERABILITY: The username is included in the error message 
+        # and will be displayed back to the user without being encoded later.
+        error_message = f"Login failed for user: {username}. Please try again."
+        
+    # Construct the raw HTML page, inserting the unescaped error message
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Vulnerable Login Test</title>
+        <style>
+            .error {{ color: red; font-weight: bold; }}
+            form {{ padding: 20px; border: 1px solid #ccc; width: 300px; }}
+        </style>
+    </head>
+    <body>
+        <h1>Vulnerable Login Page</h1>
+        
+        <p class="error">{error_message}</p>
+        
+        <form method="POST">
+            <label for="username">Username:</label><br>
+            <input type="text" id="username" name="username"><br><br>
+            
+            <label for="password">Password:</label><br>
+            <input type="password" id="password" name="password"><br><br>
+            
+            <input type="submit" value="Login">
+        </form>
+    </body>
+    </html>
+    """
+    
+    response = make_response(html_content)
+    response.headers['Content-Type'] = 'text/html'
+    return response
 
-        flash(error)
-
-    return render_template('auth/login.html')
-
-# login secure
+# This method perform the 
+# login secure, by requesting username/password
+# and using * HTML escaping in templates ({{ user|e }})
+# and parameterized SQL queries (? in SQLite or %s in psycopg2)
+# with validation of Users hash against in the DB.
 @bp.route('/login-secure', methods=('GET', 'POST'))
 def login_secure():
     if request.method == 'POST':
@@ -171,7 +254,8 @@ def login_secure():
 
     return render_template('auth/login_secure.html')
 
-# session
+# This methood holds the session
+# for the authenticated user
 @bp.before_app_request
 def load_logged_in_user():
     user_id = session.get('user_id')
@@ -179,17 +263,16 @@ def load_logged_in_user():
     if user_id is None:
         g.user = None
     else:
-        g.user = get_db().execute(
-            'SELECT * FROM user WHERE id = ?', (user_id,)
-        ).fetchone()
+        g.user = get_db().execute('SELECT * FROM user WHERE id = ?', (user_id,)).fetchone()
 
-# logout
+# This method will call the logout and 
+# clear the session
 @bp.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('auth.login'))
 
-# require authentication in other views
+# This method performs the authentication in other views
 def login_required(view):
     @functools.wraps(view)
     def wrapped_view(**kwargs):

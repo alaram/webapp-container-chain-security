@@ -6,7 +6,7 @@
 
 {% block content %}
     <h1>Search results for: {{ q|e }}</h1>
-    <form action="{{ url_for('auth.products_search') }}" method="get">
+    <form action="{{ url_for('auth.products_secure_search') }}" method="get">
         <input name="q" value="{{ q|e }}">
         <input type="submit" value="Search">
     </form>
