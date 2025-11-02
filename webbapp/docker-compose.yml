@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  myapp_flask:
+    image: flask-app-image
+    container_name: flask-app-container
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 5001:5001
+    networks:
+      - myservice-network
+
+networks:
+  myservice-network: {}
