@@ -1,0 +1,40 @@
+# Stage 1: Security Scan and Dependency Installation
+FROM python:3.11-slim as security_scan
+
+WORKDIR /app
+
+# Copy ALL files (source code, checks script, requirements) needed for the check
+COPY . /app
+
+# Install Bandit and Flask (Flask is needed for the final app run)
+RUN pip install --no-cache-dir -r requirements.txt
+
+# --- SECURITY GATE CHECK (EXPECTED PASS) ---
+# The logic here captures the script output and prints it before verifying the exit status.
+RUN set -e; \
+    echo "--- PHASE 2: Running FIXED Code Checks (Expected Pass) ---" > prebuild_checks.log; \
+    python prebuild_checks.py fixed 2>&1 | tee -a prebuild_checks.log; \
+    CHECK_STATUS=$?; \
+    echo -e "\n\n======================================================="; \
+    echo "               PREBUILD CHECKS LOG: FIXED"; \
+    echo "======================================================="; \
+    cat prebuild_checks.log; \
+    echo "=======================================================\n"; \
+    if [ $CHECK_STATUS -ne 0 ]; then \
+        echo "Security checks failed. Halting build."; \
+        exit 1; \
+    fi
+
+# Stage 2: Application Runtime Build (Only reached if Stage 1 passes)
+FROM python:3.11-slim as final
+
+WORKDIR /app
+# Copy the installed dependencies (including Flask) from the previous stage
+COPY --from=security_scan /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY app_fixed.py ./
+
+RUN echo "Security gate passed. Final application build successful."
+
+EXPOSE 5001
+# This ensures the service runs at http://localhost:5002
+CMD ["python", "app_fixed.py"]

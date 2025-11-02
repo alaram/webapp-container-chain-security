@@ -1,0 +1,36 @@
+# Stage 1: Security Scan (Pre-Build Check)
+FROM python:3.11-slim as security_scan
+
+WORKDIR /app
+
+# Copy ALL files (source code, checks script, requirements) needed for the check
+# This is crucial for prebuild_checks.py and requirements.txt to be available.
+COPY . /app
+
+# Install Bandit and Flask
+# This installs dependencies necessary for both the scan (bandit) and runtime (flask, though the app should fail here)
+RUN pip install --no-cache-dir -r requirements.txt
+
+# --- SECURITY GATE CHECK (EXPECTED FAILURE) ---
+# The logic here ensures the script runs, its output is captured (tee -a prebuild_checks.log), 
+# the exit status is checked, and the build fails if the script returns non-zero (1).
+RUN set -e; \
+    echo "--- PHASE 1: Running VULNERABLE Code Checks (Expected Fail) ---" > prebuild_checks.log; \
+    python prebuild_checks.py vulnerable 2>&1 | tee -a prebuild_checks.log; \
+    CHECK_STATUS=$?; \
+    echo -e "\n\n======================================================="; \
+    echo "               PREBUILD CHECKS LOG: VULNERABLE"; \
+    echo "======================================================="; \
+    cat prebuild_checks.log; \
+    echo "=======================================================\n"; \
+    if [ $CHECK_STATUS -ne 0 ]; then \
+        echo "Security checks failed. Halting build as intended."; \
+        exit 1; \
+    fi; \
+    # If the script exits with 0 here, it means the check unexpectedly passed, which is an error in the security gate design.
+    echo "ERROR: The vulnerable build passed the security gate when it should have failed." 
+
+# Final stage - will not be reached due to failure above
+# We use a placeholder image to signify the build stop.
+FROM busybox AS build_stopped
+CMD echo "VULNERABLE BUILD FAILED - Security Gate Blocked."

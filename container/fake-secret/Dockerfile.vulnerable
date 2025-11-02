@@ -1,0 +1,16 @@
+# Dockerfile.vulnerable
+FROM python:3.11-slim
+WORKDIR /app
+
+# 1. VULNERABLE STEP: The secret is written to the filesystem in this layer.
+RUN echo "VULNERABLE_SECRET_KEY=leaked-key-12345" > /tmp/secret.env
+
+# 2. Add application code (assuming your Flask app is here)
+COPY . . 
+
+# 3. Clean-up Attempt (Ineffective): While this removes the file in the CURRENT layer, 
+#    the previous layer's filesystem still contains the secret.
+RUN rm /tmp/secret.env
+
+# Final command to show the environment is functional (though the secret is gone from /tmp)
+CMD ["echo", "Container started."]

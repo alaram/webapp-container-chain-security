@@ -1,0 +1,65 @@
+alanramos@MacBook-Pro-som-tillhor-Alan vulnerable-repo % docker compose up --build      
+WARN[0000] /Users/alanramos/Documents/MscCybersecurity/Computer_Security-D7076E/Labs/Lab4/webapp-container-chain-security/container/vulnerable-repo/docker-compose.yml: the attribute `version` is obsolete, it will be ignored, please remove it to avoid potential confusion 
+[+] Building 4.6s (21/21) FINISHED                                                                                                                                                                                    
+ => [internal] load local bake definitions                                                                                                                                                                       0.0s
+ => => reading from stdin 1.46kB                                                                                                                                                                                 0.0s
+ => [fixed_app internal] load build definition from Dockerfile.fixed                                                                                                                                             0.0s
+ => => transferring dockerfile: 1.62kB                                                                                                                                                                           0.0s
+ => WARN: FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 2)                                                                                                                                   0.0s
+ => WARN: FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 29)                                                                                                                                  0.0s
+ => [vulnerable_app internal] load build definition from Dockerfile.vulnerable                                                                                                                                   0.0s
+ => => transferring dockerfile: 1.83kB                                                                                                                                                                           0.0s
+ => WARN: FromAsCasing: 'as' and 'FROM' keywords' casing do not match (line 2)                                                                                                                                   0.0s
+ => [fixed_app internal] load metadata for docker.io/library/python:3.11-slim                                                                                                                                    0.5s
+ => [vulnerable_app internal] load metadata for docker.io/library/busybox:latest                                                                                                                                 1.6s
+ => [auth] library/busybox:pull token for registry-1.docker.io                                                                                                                                                   0.0s
+ => [vulnerable_app internal] load .dockerignore                                                                                                                                                                 0.0s
+ => => transferring context: 2B                                                                                                                                                                                  0.0s
+ => [fixed_app internal] load build context                                                                                                                                                                      0.0s
+ => => transferring context: 2.09kB                                                                                                                                                                              0.0s
+ => [fixed_app security_scan 1/5] FROM docker.io/library/python:3.11-slim@sha256:8eb5fc663972b871c528fef04be4eaa9ab8ab4539a5316c4b8c133771214a617                                                                0.0s
+ => => resolve docker.io/library/python:3.11-slim@sha256:8eb5fc663972b871c528fef04be4eaa9ab8ab4539a5316c4b8c133771214a617                                                                                        0.0s
+ => CACHED [fixed_app security_scan 2/5] WORKDIR /app                                                                                                                                                            0.0s
+ => [fixed_app security_scan 3/5] COPY . /app                                                                                                                                                                    0.0s
+ => [fixed_app security_scan 4/5] RUN pip install --no-cache-dir -r requirements.txt                                                                                                                             2.7s
+ => [vulnerable_app build_stopped 1/1] FROM docker.io/library/busybox:latest@sha256:e3652a00a2fabd16ce889f0aa32c38eec347b997e73bd09e69c962ec7f8732ee                                                             0.5s
+ => => resolve docker.io/library/busybox:latest@sha256:e3652a00a2fabd16ce889f0aa32c38eec347b997e73bd09e69c962ec7f8732ee                                                                                          0.0s
+ => => sha256:5bc51b87d4ecce0629c488674e2580a3d58d2937d70c81d4f6d485d43e06eb06 1.90MB / 1.90MB                                                                                                                   0.5s
+ => [vulnerable_app] exporting to image                                                                                                                                                                          0.6s
+ => => exporting layers                                                                                                                                                                                          0.0s
+ => => exporting manifest sha256:569dc526fbcd63ef8e433e8f4875420912934deb3392c539dbcb15d6abeeec0e                                                                                                                0.0s
+ => => exporting config sha256:2d2bf43715b9a2eed4d71c922865144c94c3c0633d29764174f30b95ba36c708                                                                                                                  0.0s
+ => => exporting attestation manifest sha256:9084726928d6255939658b7f6a1a317dc577852a929639171c1677ea0d972e77                                                                                                    0.0s
+ => => exporting manifest list sha256:c0baf547873d9e4fa8f933e39ad82eb3326f7483e8d59e6a0a4a380dded59692                                                                                                           0.0s
+ => => naming to docker.io/library/vulnerable-repo-vulnerable_app:latest                                                                                                                                         0.0s
+ => => unpacking to docker.io/library/vulnerable-repo-vulnerable_app:latest                                                                                                                                      0.6s
+ => [vulnerable_app] resolving provenance for metadata file                                                                                                                                                      0.0s
+ => [fixed_app security_scan 5/5] RUN set -e;     echo "--- PHASE 2: Running FIXED Code Checks (Expected Pass) ---" > prebuild_checks.log;     python prebuild_checks.py fixed 2>&1 | tee -a prebuild_checks.lo  0.2s 
+ => [fixed_app final 3/5] COPY --from=security_scan /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages                                                                              0.2s 
+ => [fixed_app final 4/5] COPY app_fixed.py ./                                                                                                                                                                   0.0s 
+ => [fixed_app final 5/5] RUN echo "Security gate passed. Final application build successful."                                                                                                                   0.1s 
+ => [fixed_app] exporting to image                                                                                                                                                                               0.7s 
+ => => exporting layers                                                                                                                                                                                          0.5s 
+ => => exporting manifest sha256:f6c105b68adbc96854482495b3a31c75e4b96f037af18e992ead693e5eac1b69                                                                                                                0.0s 
+ => => exporting config sha256:037d9ca1b715bbd042e472c3a03226c20ceeae019636ba884bfa84a49bec9214                                                                                                                  0.0s
+ => => exporting attestation manifest sha256:6033d739f9433019ee60a639fd7225ce8d7f042677088b5332a3217b4e845a7a                                                                                                    0.0s
+ => => exporting manifest list sha256:ffae8d3e739334edc270f2b1378959cff2fa26e037b644f6f63e22e0b7ecd127                                                                                                           0.0s
+ => => naming to docker.io/library/vulnerable-repo-fixed_app:latest                                                                                                                                              0.0s
+ => => unpacking to docker.io/library/vulnerable-repo-fixed_app:latest                                                                                                                                           0.1s
+ => [fixed_app] resolving provenance for metadata file                                                                                                                                                           0.0s
+[+] Running 5/5
+ ✔ vulnerable-repo-fixed_app           Built                                                                                                                                                                     0.0s 
+ ✔ vulnerable-repo-vulnerable_app      Built                                                                                                                                                                     0.0s 
+ ✔ Network vulnerable-repo_default     Created                                                                                                                                                                   0.0s 
+ ✔ Container security_demo_vulnerable  Created                                                                                                                                                                   0.0s 
+ ✔ Container security_demo_fixed       Created                                                                                                                                                                   0.0s 
+Attaching to security_demo_fixed, security_demo_vulnerable
+security_demo_vulnerable  | VULNERABLE BUILD FAILED - Security Gate Blocked.
+security_demo_vulnerable exited with code 0
+security_demo_fixed       |  * Serving Flask app 'app_fixed'
+security_demo_fixed       |  * Debug mode: off
+security_demo_fixed       | WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+security_demo_fixed       |  * Running on all addresses (0.0.0.0)
+security_demo_fixed       |  * Running on http://127.0.0.1:5001
+security_demo_fixed       |  * Running on http://172.19.0.2:5001
+security_demo_fixed       | Press CTRL+C to quit

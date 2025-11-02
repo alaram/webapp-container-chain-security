@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+
+  # --- VULNERABLE SERVICE (EXPECTED BUILD FAILURE) ---
+  vulnerable_app:
+    build: 
+      context: .
+      dockerfile: Dockerfile.vulnerable # Uses the Dockerfile that checks vulnerable code
+    # The container won't run because the build will fail at the RUN security check step.
+    container_name: security_demo_vulnerable
+    # Set logging driver to capture all output
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    
+  # --- FIXED SERVICE (EXPECTED BUILD SUCCESS) ---
+  fixed_app:
+    build: 
+      context: .
+      dockerfile: Dockerfile.fixed # Uses the Dockerfile that checks fixed code
+    container_name: security_demo_fixed
+    ports:
+     - "5002:5001"
+    # Set logging driver to capture all output
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
