@@ -1,7 +1,7 @@
 import os
 
 from flask import Flask
-from flask_cors import CORS
+#from flask_cors import CORS
 
 def create_app(test_config=None):
 
@@ -10,9 +10,9 @@ def create_app(test_config=None):
     
     # Setup to define the App address
     # This information will be used for Relay with TOTP / WebAuthn
-    app.config['WEBAUTHN_RP_ID'] = '127.0.0.1'
-    app.config['WEBAUTHN_ORIGIN'] = 'http://127.0.0.1:5001'
-    app.config['WEBAUTHN_RP_NAME'] = 'Flaskr Demo'
+    #app.config['WEBAUTHN_RP_ID'] = '127.0.0.1'
+    #app.config['WEBAUTHN_ORIGIN'] = 'http://127.0.0.1:5001'
+    #app.config['WEBAUTHN_RP_NAME'] = 'Flaskr Demo'
     
     app.config.from_mapping(
         SECRET_KEY='dev',
@@ -42,7 +42,7 @@ def create_app(test_config=None):
     app.register_blueprint(auth.bp)
 
     # Required du to CORS origin error from the browser
-    CORS(app, resources={r"/webauthn/*": {"origins": ["http://127.0.0.1:4000", "http://127.0.0.1:5001"]}})
+    # CORS(app, resources={r"/webauthn/*": {"origins": ["http://127.0.0.1:4000", "http://127.0.0.1:5001"]}})
     
     # Healt check for the Flask App
     @app.route("/health")
