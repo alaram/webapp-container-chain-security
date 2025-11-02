@@ -1,0 +1,28 @@
+Exploit all three injection:
+* SQL injection via login and product search forms (unsanitized input)
+This can be tested by 
+
+Login unsanitised http://127.0.0.1:5001/auth/login  —> payload <script>alert('XSS')</script>
+Search forms http://127.0.0.1:5001/auth/products/injection/search   —> in the search box 
+
+widget' OR '1'='1' --” bringing the whole DB 
+
+
+* Reflected XSS in a search field and stored XSS in comments
+Reflected XSS - Login unsanitised http://127.0.0.1:5001/auth/login  —> payload <script>alert('XSS')</script>
+Stored XSS - http://127.0.0.1:5001/auth/comments —-> payload <script>alert('XSS')</script>
+
+* OS command injection via a diagnostics shell command (e.g., ping)
+http://127.0.0.1:5001/auth/ping?host=127.0.0.1
+
+
+Add countermeasures:
+* Use parameterized SQL queries (? in SQLite or %s in psycopg2)
+http://127.0.0.1:5001/auth/register-secure
+http://127.0.0.1:5001/auth/products/secure/search
+
+* Use HTML escaping in templates ({{ user|e }})
+/products_secure_search.html
+
+* Use shlex.quote() or subprocess.run() with safe lists for system commands
+http://127.0.0.1:5000/auth/ping-secure?host=127.0.0.1 
