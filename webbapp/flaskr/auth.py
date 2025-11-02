@@ -10,6 +10,56 @@ from flaskr.db import get_db
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 app = Flask(__name__)
 
+# Mock "Database" (an in-memory list to store raw comments)
+# In a real app, this would be a SQL database or similar.
+comments_db = []
+
+# --- 1. Comment Submission Route (The Injection Point) ---
+# perform the attack with <script>alert('Stored XSS Worked!')</script>
+@bp.route('/submit_comment', methods=['POST'])
+def submit_comment():
+    # ⚠️ VULNERABILITY: Input is taken and stored RAW, with NO sanitization.
+    comment_content = request.form.get('content', 'Empty Comment')
+    
+    # Store the raw, unsanitized input into the mock DB
+    comments_db.append({'content': comment_content})
+    
+    # Redirect to the view page
+    return redirect(url_for('auth.view_comments'))
+
+# --- 2. Comment retrieval Route ---
+@bp.route('/comments', methods=['GET'])
+def view_comments():
+    comments_html = ""
+
+    for comment in comments_db:
+        # ⚠️ VULNERABILITY: Constructing HTML with raw stored data.
+        # This simulates using a function that bypasses escaping (like Jinja's |safe).
+        comments_html += f"<div class='comment'>Author: Attacker<br>Comment: {comment['content']}</div><hr>"
+    
+    # Construct the raw HTML response page
+    html_content = f"""
+    <!DOCTYPE html>
+    <html>
+    <head><title>Stored XSS Test</title></head>
+    <body>
+        <h1>Vulnerable Comments Section</h1>
+        
+        <form action="{url_for('auth.submit_comment')}" method="POST">
+            <textarea name="content" rows="4" cols="50" placeholder="Enter XSS payload here..."></textarea><br>
+            <input type="submit" value="Post Comment">
+        </form>
+        
+        <h2>All Comments:</h2>
+        {comments_html}
+        
+    </body>
+    </html>
+    """
+    response = make_response(html_content)
+    response.headers['Content-Type'] = 'text/html'
+    return response
+
 #OS command injection via a diagnostics shell command
 @bp.route('/ping', methods=['GET'])
 def ping_host():
@@ -118,31 +168,31 @@ def products_secure_search():
     return render_template('auth/product_secure_search.html', q=q, rows=rows)
 
 # register vulnerable
-@bp.route('/register', methods=('GET', 'POST'))
-def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        db = get_db()
-        error = None
-
-        if not username:
-            error = 'Username is required.'
-        elif not password:
-            error = 'Password is required.'
-
-        if error is None:
-            try:
-                db.execute("INSERT INTO user (username, password) VALUES ('" + username + "', '" + password + "')",)
-                db.commit()
-            except db.IntegrityError:
-                error = f"User {username} is already registered."
-            else:
-                return redirect(url_for("auth.login"))
-
-        flash(error)
-
-    return render_template("auth/register.html")
+#@bp.route('/register', methods=('GET', 'POST'))
+#def register():
+#    if request.method == 'POST':
+#        username = request.form['username']
+#        password = request.form['password']
+#        db = get_db()
+#        error = None
+#
+#        if not username:
+#            error = 'Username is required.'
+#        elif not password:
+#            error = 'Password is required.'
+#
+#        if error is None:
+#            try:
+#                db.execute("INSERT INTO user (username, password) VALUES ('" + username + "', '" + password + "')",)
+#                db.commit()
+#            except db.IntegrityError:
+#                error = f"User {username} is already registered."
+#            else:
+#                return redirect(url_for("auth.login"))
+#
+#        flash(error)
+#
+#    return render_template("auth/register.html")
 
 # register secure
 @bp.route('/register-secure', methods=('GET', 'POST'))
@@ -270,7 +320,7 @@ def load_logged_in_user():
 @bp.route('/logout')
 def logout():
     session.clear()
-    return redirect(url_for('auth.login'))
+    return redirect(url_for('auth.login_secure'))
 
 # This method performs the authentication in other views
 def login_required(view):

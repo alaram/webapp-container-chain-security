@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS user;
 DROP TABLE IF EXISTS usersecure;
 DROP TABLE IF EXISTS products;
+-- DROP TABLE IF EXISTS comments;
 
 -- User table
 CREATE TABLE user (
@@ -9,12 +10,14 @@ CREATE TABLE user (
   password TEXT NOT NULL
 );
 
+-- User table for secure registration
 CREATE TABLE usersecure (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT UNIQUE NOT NULL,
   hash TEXT NOT NULL
 );
 
+-- Products table
 CREATE TABLE products (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
@@ -23,6 +26,12 @@ CREATE TABLE products (
   sku TEXT UNIQUE,
   created TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Comments table
+--CREATE TABLE comments (
+--    id INTEGER PRIMARY KEY,
+--    content TEXT NOT NULL
+--);
 
 -- Seed products (sample rows for demo)
 INSERT INTO products (name, description, price, sku) VALUES ('Red Widget', 'A great red widget', 9.99, 'RW-001');
